@@ -69,24 +69,6 @@ wave_pt *wave_type;
 
 int wave[2];
 
-void f_Malloc(void){
-  int i;
-  if((ch = (channel_para*)malloc(2 * sizeof(channel_para))) == NULL) {
-    printf("Not enough memory.\n");
-  }
-
-  for(i=0; i<2; i++){
-    ch[i].amp = AMP;
-    ch[i].mean = MEAN;
-    ch[i].freq = FREQ;
-  }
-
-  if((wave_type = (wave_pt*)malloc(4 * sizeof(wave_pt))) == NULL) {
-    printf("Not enough memory.\n");
-    exit(1);
-  }
-}
-
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 // Threads
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -94,10 +76,9 @@ void f_Malloc(void){
 void *t_Wave1(void* arg){
 
   unsigned int i;
-  unsigned int current1[NO_POINT],current2[NO_POINT];
-  float dummy1,dummy2;
-  struct timespec start1, stop1;
-  double accum1=0, accum2=0;
+  unsigned int current1[NO_POINT];
+  struct timespec start1, stop1, require1;
+  double accum1=0;
 
   printf("Wave1 thread created.\n");
 
@@ -118,7 +99,8 @@ void *t_Wave1(void* arg){
         out16(DA_CTLREG,0x0a23);		  // DA Enable, #0, #1, SW 5V unipolar
         out16(DA_FIFOCLR, 0);				  // Clear DA FIFO  buffer
         out16(DA_Data,(short) current1[i]);
-        delay (((1/ch[0].freq*1000)-(accum1))/NO_POINT);
+        //delay (((1/ch[0].freq*1000)-(accum1)*1000)/NO_POINT);
+        nanosleep(&require1,NULL);
       }
       break;
       case 2 :
@@ -129,7 +111,8 @@ void *t_Wave1(void* arg){
         out16(DA_CTLREG,0x0a23);			// DA Enable, #0, #1, SW 5V unipolar
         out16(DA_FIFOCLR, 0);				  // Clear DA FIFO  buffer
         out16(DA_Data,(short) current1[i]);
-        delay (((1/ch[0].freq*1000)-(accum1))/NO_POINT);
+        //delay (((1/ch[0].freq*1000)-(accum1)*1000)/NO_POINT);
+        nanosleep(&require1,NULL);
       }
       break;
       case 3 :
@@ -140,7 +123,8 @@ void *t_Wave1(void* arg){
         out16(DA_CTLREG,0x0a23);			// DA Enable, #0, #1, SW 5V unipolar
         out16(DA_FIFOCLR, 0);				// Clear DA FIFO  buffer
         out16(DA_Data,(short) current1[i]);
-        delay (((1/ch[0].freq*1000)-(accum1))/NO_POINT);
+        //delay (((1/ch[0].freq*1000)-(accum1)*1000)/NO_POINT);
+        nanosleep(&require1,NULL);
       }
       break;
       case 4 :
@@ -151,7 +135,8 @@ void *t_Wave1(void* arg){
         out16(DA_CTLREG,0x0a23);			// DA Enable, #0, #1, SW 5V unipolar
         out16(DA_FIFOCLR, 0);				// Clear DA FIFO  buffer
         out16(DA_Data,(short) current1[i]);
-        delay (((1/ch[0].freq*1000)-(accum1))/NO_POINT);
+        //delay (((1/ch[0].freq*1000)-(accum1)*1000)/NO_POINT);
+        nanosleep(&require1,NULL);
       }
       break;
     }
@@ -162,6 +147,8 @@ void *t_Wave1(void* arg){
     }
 
     accum1=(double)(stop1.tv_sec-start1.tv_sec)+(double)(stop1.tv_nsec-start1.tv_nsec)/BILLION;
+    require1.tv_sec=(time_t)((1/ch[0].freq-accum1)/NO_POINT);
+    require1.tv_nsec=(long)((1/ch[0].freq-require.tv_sec)*BILLION/NO_POINT);
   }
 }
 
@@ -169,7 +156,7 @@ void *t_Wave2(void* arg){
 
   unsigned int i;
   unsigned int current2[NO_POINT];
-  struct timespec start2, stop2;
+  struct timespec start2, stop2, require2;
   double accum2=0;
 
   printf("Wave2 thread created.\n");
@@ -190,7 +177,8 @@ void *t_Wave2(void* arg){
         out16(DA_CTLREG,0x0a43);			// DA Enable, #0, #1, SW 5V unipolar
         out16(DA_FIFOCLR, 0);				// Clear DA FIFO  buffer
         out16(DA_Data,(short) current2[i]);
-        delay (((1/ch[1].freq*1000)-(accum2))/NO_POINT);
+        //delay (((1/ch[1].freq*1000)-(accum2))/NO_POINT);
+        nanosleep(&require2,NULL);
       }
       break;
       case 2 :
@@ -201,7 +189,9 @@ void *t_Wave2(void* arg){
         out16(DA_CTLREG,0x0a43);			// DA Enable, #0, #1, SW 5V unipolar
         out16(DA_FIFOCLR, 0);				// Clear DA FIFO  buffer
         out16(DA_Data,(short) current2[i]);
-        delay (((1/ch[1].freq*1000)-(accum2))/NO_POINT);
+        //delay (((1/ch[1].freq*1000)-(accum2))/NO_POINT);
+        nanosleep(&require2,NULL);
+
       }
       break;
       case 3 :
@@ -212,7 +202,8 @@ void *t_Wave2(void* arg){
         out16(DA_CTLREG,0x0a43);			// DA Enable, #0, #1, SW 5V unipolar
         out16(DA_FIFOCLR, 0);				// Clear DA FIFO  buffer
         out16(DA_Data,(short) current2[i]);
-        delay (((1/ch[1].freq*1000)-(accum2))/NO_POINT);
+        //delay (((1/ch[1].freq*1000)-(accum2))/NO_POINT);
+        nanosleep(&require2,NULL);
       }
       break;
       case 4 :
@@ -223,7 +214,8 @@ void *t_Wave2(void* arg){
         out16(DA_CTLREG,0x0a43);			// DA Enable, #0, #1, SW 5V unipolar
         out16(DA_FIFOCLR, 0);				// Clear DA FIFO  buffer
         out16(DA_Data,(short) current2[i]);
-        delay (((1/ch[1].freq*1000)-(accum2))/NO_POINT);
+        //delay (((1/ch[1].freq*1000)-(accum2))/NO_POINT);
+        nanosleep(&require2,NULL);
       }
       break;
     }
@@ -234,6 +226,8 @@ void *t_Wave2(void* arg){
     }
 
     accum2=(double)(stop2.tv_sec-start2.tv_sec)+(double)(stop2.tv_nsec-start2.tv_nsec)/BILLION;
+    require2.tv_sec=(time_t)((1/ch[1].freq-accum2)/NO_POINT);
+    require2.tv_nsec=(long)((1/ch[1].freq-require.tv_sec)*BILLION/NO_POINT);
   }
 }
 
@@ -245,7 +239,6 @@ void *t_HardwareInput(void* arg){
   printf("HardwaveInput thread created.\n");
 
   while(1)  {
-    out8(DIO_CTLREG,0x90);					// Port A : Input,  Port B : Output,  Port C (upper | lower) : Output | Output
     dio_in=in8(DIO_PORTA); 					// Read Port A
 
 
@@ -272,19 +265,20 @@ void *t_HardwareInput(void* arg){
 
       switch ((int)mode) {
         case 1:
-        ch[0].amp = (float)adc_in[0] * 5.00 / 0xffff; //scale from 16 bits to 5
-        ch[1].amp =(float)adc_in[1] * 5.00 / 0xffff; //scale from 16 bits to 5
+        ch[0].amp = (float)adc_in[0] * 5.00 / 0xffff; //scale from 16 bits to 0 ~ 5
+        ch[1].amp =(float)adc_in[1] * 5.00 / 0xffff; //scale from 16 bits to 0 ~ 5
         break;
         case 2:
-        ch[0].freq = ( float)adc_in[0] * 4.50 / 0xffff+0.5; //scale from 16 bits to 0.5 ~ 5
-        ch[1].freq = ( float)adc_in[1] * 4.50 / 0xffff+0.5; //scale from 16 bits to 0.5 ~ 5
+        ch[0].freq = (float)adc_in[0] * 4.50 / 0xffff+0.5; //scale from 16 bits to 0.5 ~ 5
+        ch[1].freq = (float)adc_in[1] * 4.50 / 0xffff+0.5; //scale from 16 bits to 0.5 ~ 5
         break;
         case 3:
-        ch[0].mean = ( float)adc_in[0] * 2.00 / 0xffff; //scale from 16 bits to 2.00
-        ch[1].mean = ( float)adc_in[1] * 2.00 / 0xffff; //scale from 16 bits to 2.00
+        ch[0].mean = (float)adc_in[0] * 2.00 / 0xffff; //scale from 16 bits to 0.00 ~ 2.00
+        ch[1].mean = (float)adc_in[1] * 2.00 / 0xffff; //scale from 16 bits to 0.00 ~ 2.00
         break;
       }
     }	//if take input from keyboard
+    //else raise(SIGQUIT); 
     delay(100);
   } //end of while
 } //end of thread
@@ -407,6 +401,53 @@ void f_WaveGen(){
   }
 }
 
+void f_ArgCheck(int* argc, char* argv[]){
+  if(argc>=2){
+    for(i=1;i<argc;i++){
+      if(strcmp(argv[i],"-sine")==0){
+        printf("%d. Sine wave chosen as wave\n",i);
+        wave[i-1]=1;
+      }
+      if(strcmp(argv[i],"-square")==0){
+        printf("%d. Square wave chosen as wave\n",i);
+        wave[i-1]=2;
+      }
+      if(strcmp(argv[i],"-saw")==0){
+        printf("%d. Saw wave chosen as wave\n",i);
+        wave[i-1]=3;
+      }
+      if(strcmp(argv[i],"-tri")==0){
+        printf("%d. Triangular wave chosen as wave\n",i);
+        wave[i-1]=4;
+      }
+    }//end of for loop, checking argv[]
+  }
+  if (argc==1) { //if no terminal argument is input, set sine wave as default waveform for both channel
+    wave[0]=1; wave[1]=1;
+  }
+  if (argc==2) { //if only 1 argument is input, set sine wave as default waveform the other channel
+    wave[1]=1;
+  }
+}
+
+void f_Malloc(void){
+  int i;
+  if((ch = (channel_para*)malloc(2 * sizeof(channel_para))) == NULL) {
+    printf("Not enough memory.\n");
+  }
+
+  for(i=0; i<2; i++){
+    ch[i].amp = AMP;
+    ch[i].mean = MEAN;
+    ch[i].freq = FREQ;
+  }
+
+  if((wave_type = (wave_pt*)malloc(4 * sizeof(wave_pt))) == NULL) {
+    printf("Not enough memory.\n");
+    exit(1);
+  }
+}
+
 void f_termination(){
   out16(DA_CTLREG,(short)0x0a23);
   out16(DA_FIFOCLR,(short) 0);
@@ -472,7 +513,7 @@ void f_ChangeWavePrompt(){
 
 void f_SaveFile(char *filename, FILE *fp, char *data){
   char *filetype = ".txt";
-  f_f_StrCat(filename, filetype);
+  f_StrCat(filename, filetype);
   printf("\nFile saving in progress, please wait...\n");
 
   if ((fp = fopen(filename, "w")) == NULL){
@@ -500,7 +541,6 @@ void f_SaveFilePrompt(){
     , ch[0].amp , ch[0].mean, ch[0].freq,  ch[1].amp , ch[1].mean, ch[1].freq);
 
     f_SaveFile(filename, fp, data);
-  }
 }
 
 void f_ReadFile(char *filename, FILE *fp){
@@ -583,8 +623,12 @@ void f_KeyboardInput(){
 void signal_handler(){
   int t;
   pthread_t temp;
+
   temp = pthread_self();
   printf("\nHardware Termination Raised\n");
+
+  f_termination();
+
   for(t = 3; t >= 0; t--){
     if(thread[t] != temp) {
       pthread_cancel(thread[t]);
@@ -609,36 +653,10 @@ int main(int argc, char* argv[]) {
   f_PCIsetup();
   f_Malloc();
   f_WaveGen();
+  f_ArgCheck(&argc, *argv[]);
 
   signal(SIGINT, signal_handler);
   signal(SIGQUIT, f_KeyboardInput);
-
-  if(argc>=2){
-    for(i=1;i<argc;i++){
-      if(strcmp(argv[i],"-sine")==0){
-        printf("%d. Sine wave chosen as wave\n",i);
-        wave[i-1]=1;
-      }
-      if(strcmp(argv[i],"-square")==0){
-        printf("%d. Square wave chosen as wave\n",i);
-        wave[i-1]=2;
-      }
-      if(strcmp(argv[i],"-saw")==0){
-        printf("%d. Saw wave chosen as wave\n",i);
-        wave[i-1]=3;
-      }
-      if(strcmp(argv[i],"-tri")==0){
-        printf("%d. Triangular wave chosen as wave\n",i);
-        wave[i-1]=4;
-      }
-    }//end of for loop, checking argv[]
-  }
-  if (argc==1) {
-    wave[0]=1; wave[1]=2;
-  }
-  if (argc==2) {
-    wave[1]=2;
-  }
 
   printf("Initialisation Complete\n");
 
